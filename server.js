@@ -4,6 +4,7 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const socketio = require('socket.io');
 const { ExpressPeerServer } = require('peer');
+const cors = require('cors');
 
 const app = express();
 const server = http.Server(app);
@@ -14,10 +15,13 @@ const peerServer = ExpressPeerServer(server, {
 });
 
 // port setup
-const port = 3001 || process.env.PORT;
+const port = process.env.PORT || 3001;
 
 // webrtc peer setup
 app.use('/peerjs', peerServer);
+
+// cors setup
+app.use(cors());
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -50,7 +54,14 @@ io.on('connection', socket => {
         // console.log(roomId,userId)
         socket.join(roomId);
         socket.to(roomId).broadcast.emit('user-connected', userId);
-    })
+    
+    
+        socket.on('message', (userId, message) => {
+            io.to(roomId).emit('createMessage', userId, message)
+        })
+    
+    });
+
 
 });
 
